@@ -1,0 +1,11 @@
+// Phase 0: datasource and generator only.
+// Models are added incrementally per README phase (Phase 1+).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
