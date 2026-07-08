@@ -1,7 +1,6 @@
 import express, { Application } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import { corsOptions } from './config/cors';
 import { requestLogger } from './middlewares/requestLogger';
 import { errorHandler } from './middlewares/errorHandler';
@@ -13,7 +12,6 @@ export const createApp = (): Application => {
 
   app.use(helmet());
   app.use(cors(corsOptions));
-  app.use(cookieParser());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(requestLogger);

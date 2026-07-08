@@ -1,5 +1,5 @@
-// Phase 0: datasource and generator only.
-// Models are added incrementally per README phase (Phase 1+).
+// Phase 1: User + RefreshToken. Additional models added per README phase.
+// Prisma fields stay camelCase in TypeScript; DB columns/tables use snake_case via @map / @@map.
 
 generator client {
   provider = "prisma-client-js"
@@ -8,4 +8,41 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+
+  @@map("auth_provider")
+}
+
+model User {
+  id            Int          @id @default(autoincrement())
+  fullName      String       @map("full_name")
+  email         String       @unique
+  passwordHash  String?      @map("password_hash")
+  avatar        String?
+  provider      AuthProvider @default(LOCAL)
+  providerId    String?      @map("provider_id")
+  emailVerified DateTime?    @map("email_verified")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+
+  @@unique([provider, providerId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }
