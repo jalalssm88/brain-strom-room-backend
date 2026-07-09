@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../helpers/asyncHandler';
 import { authService } from '../services/auth.service';
-import { LoginDto, SignupDto } from '../types/auth.types';
+import { LoginDto, SignupDto, ForgotPasswordDto, ResetPasswordDto } from '../types/auth.types';
 
-// Tokens are returned in the JSON body (not cookies) so the same REST API
-// can be consumed by both the web client and future mobile apps.
 export class AuthController {
   signup = asyncHandler(async (req: Request, res: Response) => {
     const dto: SignupDto = {
@@ -61,6 +59,47 @@ export class AuthController {
     res.status(200).json({
       success: true,
       data: { user },
+    });
+  });
+
+  verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+    const user = await authService.verifyEmail(req.body.token as string);
+
+    res.status(200).json({
+      success: true,
+      data: { user, message: 'Email verified successfully' },
+    });
+  });
+
+  resendVerification = asyncHandler(async (req: Request, res: Response) => {
+    await authService.resendVerificationEmail(req.userId!);
+
+    res.status(200).json({
+      success: true,
+      data: { message: 'Verification email sent' },
+    });
+  });
+
+  forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    const dto: ForgotPasswordDto = { email: req.body.email };
+    await authService.forgotPassword(dto);
+
+    res.status(200).json({
+      success: true,
+      data: { message: 'If an account exists for that email, a reset link has been sent' },
+    });
+  });
+
+  resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const dto: ResetPasswordDto = {
+      token: req.body.token,
+      password: req.body.password,
+    };
+    await authService.resetPassword(dto);
+
+    res.status(200).json({
+      success: true,
+      data: { message: 'Password reset successfully' },
     });
   });
 }

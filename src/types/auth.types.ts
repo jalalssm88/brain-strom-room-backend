@@ -38,3 +38,16 @@ export interface JwtRefreshPayload {
   userId: number;
   tokenId: string;
 }
+
+export interface VerifyEmailDto {
+  token: string;
+}
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  password: string;
+}

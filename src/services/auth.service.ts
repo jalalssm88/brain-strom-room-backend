@@ -1,19 +1,26 @@
-import { randomUUID } from 'crypto';
-import { User } from '@prisma/client';
-import { ConflictError, UnauthorizedError } from '../errors/AppError';
+import { AuthProvider, User } from '@prisma/client';
+import { BadRequestError, ConflictError, UnauthorizedError } from '../errors/AppError';
+import { EMAIL_VERIFICATION_EXPIRES_HOURS, PASSWORD_RESET_EXPIRES_HOURS } from '../constants/auth';
 import { userRepository } from '../repositories/user.repository';
 import { refreshTokenRepository } from '../repositories/refreshToken.repository';
+import { emailVerificationTokenRepository } from '../repositories/emailVerificationToken.repository';
+import { passwordResetTokenRepository } from '../repositories/passwordResetToken.repository';
+import { emailService } from './email.service';
 import { hashPassword, comparePassword, hashToken } from '../utils/hash';
+import { generateSecureToken } from '../utils/token';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';
+import { randomUUID } from 'crypto';
 import {
   AuthResult,
   AuthUserResponse,
   AuthTokens,
   LoginDto,
   SignupDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from '../types/auth.types';
 
-const toAuthUserResponse = (user: User): AuthUserResponse => ({
+const userResponse = (user: User): AuthUserResponse => ({
   id: user.id,
   fullName: user.fullName,
   email: user.email,
@@ -22,6 +29,18 @@ const toAuthUserResponse = (user: User): AuthUserResponse => ({
   emailVerified: user.emailVerified?.toISOString() ?? null,
   createdAt: user.createdAt.toISOString(),
 });
+
+const getEmailVerificationExpiry = (): Date => {
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + EMAIL_VERIFICATION_EXPIRES_HOURS);
+  return expiresAt;
+};
+
+const getPasswordResetExpiry = (): Date => {
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + PASSWORD_RESET_EXPIRES_HOURS);
+  return expiresAt;
+};
 
 export class AuthService {
   private async issueTokens(user: User): Promise<AuthTokens> {
@@ -39,6 +58,20 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  private async sendVerificationEmail(email: string): Promise<void> {
+    const token = generateSecureToken();
+    const tokenHash = hashToken(token);
+
+    await emailVerificationTokenRepository.deleteByEmail(email);
+    await emailVerificationTokenRepository.create({
+      email: email.toLowerCase(),
+      tokenHash,
+      expiresAt: getEmailVerificationExpiry(),
+    });
+
+    await emailService.sendVerificationEmail(email, token);
+  }
+
   async signup(dto: SignupDto): Promise<AuthResult> {
     const existing = await userRepository.findByEmail(dto.email);
     if (existing) {
@@ -52,8 +85,10 @@ export class AuthService {
       passwordHash,
     });
 
+    await this.sendVerificationEmail(user.email);
+
     const tokens = await this.issueTokens(user);
-    return { user: toAuthUserResponse(user), tokens };
+    return { user: userResponse(user), tokens };
   }
 
   async login(dto: LoginDto): Promise<AuthResult> {
@@ -68,7 +103,7 @@ export class AuthService {
     }
 
     const tokens = await this.issueTokens(user);
-    return { user: toAuthUserResponse(user), tokens };
+    return { user: userResponse(user), tokens };
   }
 
   async logout(refreshToken: string | undefined): Promise<void> {
@@ -104,7 +139,7 @@ export class AuthService {
     await refreshTokenRepository.deleteById(stored.id);
     const tokens = await this.issueTokens(user);
 
-    return { user: toAuthUserResponse(user), tokens };
+    return { user: userResponse(user), tokens };
   }
 
   async getCurrentUser(userId: number): Promise<AuthUserResponse> {
@@ -112,7 +147,96 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
-    return toAuthUserResponse(user);
+    return userResponse(user);
+  }
+
+  async verifyEmail(token: string): Promise<AuthUserResponse> {
+    const tokenHash = hashToken(token);
+    const stored = await emailVerificationTokenRepository.findByTokenHash(tokenHash);
+
+    if (!stored || stored.expiresAt < new Date()) {
+      if (stored) {
+        await emailVerificationTokenRepository.deleteById(stored.id);
+      }
+      throw new BadRequestError('Invalid or expired verification token');
+    }
+
+    const user = await userRepository.findByEmail(stored.email);
+    if (!user) {
+      await emailVerificationTokenRepository.deleteById(stored.id);
+      throw new BadRequestError('Invalid or expired verification token');
+    }
+
+    if (user.emailVerified) {
+      await emailVerificationTokenRepository.deleteById(stored.id);
+      return userResponse(user);
+    }
+
+    const updatedUser = await userRepository.markEmailVerified(user.id);
+    await emailVerificationTokenRepository.deleteById(stored.id);
+
+    return userResponse(updatedUser);
+  }
+
+  async resendVerificationEmail(userId: number): Promise<void> {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedError('User not found');
+    }
+
+    if (user.provider !== AuthProvider.LOCAL) {
+      throw new BadRequestError('Email verification is not required for this account');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestError('Email is already verified');
+    }
+
+    await this.sendVerificationEmail(user.email);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    const user = await userRepository.findByEmail(dto.email);
+
+    // Always succeed silently to avoid leaking whether the email exists
+    if (!user || !user.passwordHash || user.provider !== AuthProvider.LOCAL) {
+      return;
+    }
+
+    const token = generateSecureToken();
+    const tokenHash = hashToken(token);
+
+    await passwordResetTokenRepository.deleteByEmail(user.email);
+    await passwordResetTokenRepository.create({
+      email: user.email,
+      tokenHash,
+      expiresAt: getPasswordResetExpiry(),
+    });
+
+    await emailService.sendPasswordResetEmail(user.email, token);
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    const tokenHash = hashToken(dto.token);
+    const stored = await passwordResetTokenRepository.findByTokenHash(tokenHash);
+
+    if (!stored || stored.expiresAt < new Date()) {
+      if (stored) {
+        await passwordResetTokenRepository.deleteById(stored.id);
+      }
+      throw new BadRequestError('Invalid or expired reset token');
+    }
+
+    const user = await userRepository.findByEmail(stored.email);
+    if (!user || !user.passwordHash) {
+      await passwordResetTokenRepository.deleteById(stored.id);
+      throw new BadRequestError('Invalid or expired reset token');
+    }
+
+    const passwordHash = await hashPassword(dto.password);
+    await userRepository.updatePasswordHash(user.id, passwordHash);
+    await passwordResetTokenRepository.deleteById(stored.id);
+    await refreshTokenRepository.deleteAllByUserId(user.id);
   }
 }
 

@@ -27,6 +27,20 @@ export class UserRepository {
       },
     });
   }
+
+  async markEmailVerified(id: number): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { emailVerified: new Date() },
+    });
+  }
+
+  async updatePasswordHash(id: number, passwordHash: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

@@ -4,6 +4,9 @@ import {
   signupValidation,
   loginValidation,
   refreshTokenValidation,
+  verifyEmailValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
 } from '../validations/auth.validation';
 import { validate } from '../middlewares/validate';
 import { authenticate } from '../middlewares/authenticate';
@@ -14,6 +17,10 @@ router.post('/signup', validate(signupValidation), authController.signup);
 router.post('/login', validate(loginValidation), authController.login);
 router.post('/logout', validate(refreshTokenValidation), authController.logout);
 router.post('/refresh', validate(refreshTokenValidation), authController.refresh);
+router.post('/verify-email', validate(verifyEmailValidation), authController.verifyEmail);
+router.post('/forgot-password', validate(forgotPasswordValidation), authController.forgotPassword);
+router.post('/reset-password', validate(resetPasswordValidation), authController.resetPassword);
+router.post('/resend-verification', authenticate, authController.resendVerification);
 router.get('/me', authenticate, authController.me);
 
 export default router;

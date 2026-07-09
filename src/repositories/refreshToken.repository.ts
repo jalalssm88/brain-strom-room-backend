@@ -23,6 +23,10 @@ export class RefreshTokenRepository {
   async deleteById(id: number): Promise<void> {
     await prisma.refreshToken.delete({ where: { id } });
   }
+
+  async deleteAllByUserId(userId: number): Promise<void> {
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+  }
 }
 
 export const refreshTokenRepository = new RefreshTokenRepository();
