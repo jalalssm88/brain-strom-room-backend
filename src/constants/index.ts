@@ -1,4 +1,4 @@
-/** Workspace limits — used from Phase 4 onward */
+/** Workspace limits */
 export const WORKSPACE_LIMITS = {
   FREE: 5,
   PRO: null as number | null,

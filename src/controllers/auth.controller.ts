@@ -1,7 +1,15 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../helpers/asyncHandler';
+import { env } from '../config/env';
+import { getGoogleAuthUrl } from '../config/google';
 import { authService } from '../services/auth.service';
+import { googleAuthService } from '../services/googleAuth.service';
+import { signOAuthState, verifyOAuthState } from '../utils/oauthState';
 import { LoginDto, SignupDto, ForgotPasswordDto, ResetPasswordDto } from '../types/auth.types';
+
+const redirectToLoginWithError = (res: Response, errorCode: string): void => {
+  res.redirect(`${env.FRONTEND_URL}/login?error=${errorCode}`);
+};
 
 export class AuthController {
   signup = asyncHandler(async (req: Request, res: Response) => {
@@ -101,6 +109,44 @@ export class AuthController {
       success: true,
       data: { message: 'Password reset successfully' },
     });
+  });
+
+  googleRedirect = asyncHandler(async (_req: Request, res: Response) => {
+    googleAuthService.assertConfigured();
+    const state = signOAuthState();
+    const authUrl = getGoogleAuthUrl(state);
+    res.redirect(authUrl);
+  });
+
+  googleCallback = asyncHandler(async (req: Request, res: Response) => {
+    const oauthError = req.query.error as string | undefined;
+    const code = req.query.code as string | undefined;
+    const state = req.query.state as string | undefined;
+
+    if (oauthError) {
+      redirectToLoginWithError(res, 'google_auth_denied');
+      return;
+    }
+
+    if (!code || !state) {
+      redirectToLoginWithError(res, 'google_auth_failed');
+      return;
+    }
+
+    try {
+      verifyOAuthState(state);
+      const profile = await googleAuthService.getProfileFromCode(code);
+      const result = await authService.googleAuth(profile);
+
+      const params = new URLSearchParams({
+        accessToken: result.tokens.accessToken,
+        refreshToken: result.tokens.refreshToken,
+      });
+
+      res.redirect(`${env.FRONTEND_URL}/auth/callback?${params.toString()}`);
+    } catch {
+      redirectToLoginWithError(res, 'google_auth_failed');
+    }
   });
 }
 

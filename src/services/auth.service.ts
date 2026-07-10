@@ -6,6 +6,7 @@ import { refreshTokenRepository } from '../repositories/refreshToken.repository'
 import { emailVerificationTokenRepository } from '../repositories/emailVerificationToken.repository';
 import { passwordResetTokenRepository } from '../repositories/passwordResetToken.repository';
 import { emailService } from './email.service';
+import { googleAuthService } from './googleAuth.service';
 import { hashPassword, comparePassword, hashToken } from '../utils/hash';
 import { generateSecureToken } from '../utils/token';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';
@@ -19,6 +20,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from '../types/auth.types';
+import { GoogleProfile } from '../types/google.types';
 
 const userResponse = (user: User): AuthUserResponse => ({
   id: user.id,
@@ -237,6 +239,47 @@ export class AuthService {
     await userRepository.updatePasswordHash(user.id, passwordHash);
     await passwordResetTokenRepository.deleteById(stored.id);
     await refreshTokenRepository.deleteAllByUserId(user.id);
+  }
+
+  async googleAuth(profile: GoogleProfile): Promise<AuthResult> {
+    googleAuthService.assertConfigured();
+
+    const email = profile.email.toLowerCase();
+    let user =
+      (await userRepository.findByProvider(AuthProvider.GOOGLE, profile.sub)) ??
+      (await userRepository.findByProviderId(profile.sub));
+
+    if (!user) {
+      const existingByEmail = await userRepository.findByEmail(email);
+
+      if (existingByEmail) {
+        if (existingByEmail.providerId && existingByEmail.providerId !== profile.sub) {
+          throw new ConflictError('This email is linked to a different Google account');
+        }
+
+        user = await userRepository.linkGoogleAccount(existingByEmail.id, {
+          providerId: profile.sub,
+          avatar: profile.picture,
+          fullName: profile.name,
+        });
+      } else {
+        user = await userRepository.createOAuthUser({
+          fullName: profile.name,
+          email,
+          provider: AuthProvider.GOOGLE,
+          providerId: profile.sub,
+          avatar: profile.picture,
+        });
+      }
+    } else {
+      user = await userRepository.updateOAuthProfile(user.id, {
+        fullName: profile.name,
+        avatar: profile.picture,
+      });
+    }
+
+    const tokens = await this.issueTokens(user);
+    return { user: userResponse(user), tokens };
   }
 }
 

@@ -14,7 +14,7 @@ export const initSocket = (httpServer: HttpServer): Server => {
   });
 
   io.use((_socket: Socket, next) => {
-    // JWT auth on handshake — implemented in Phase 8
+    // JWT auth on handshake — placeholder
     next();
   });
 

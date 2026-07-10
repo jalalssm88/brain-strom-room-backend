@@ -21,6 +21,8 @@ router.post('/verify-email', validate(verifyEmailValidation), authController.ver
 router.post('/forgot-password', validate(forgotPasswordValidation), authController.forgotPassword);
 router.post('/reset-password', validate(resetPasswordValidation), authController.resetPassword);
 router.post('/resend-verification', authenticate, authController.resendVerification);
+router.get('/google', authController.googleRedirect);
+router.get('/google/callback', authController.googleCallback);
 router.get('/me', authenticate, authController.me);
 
 export default router;

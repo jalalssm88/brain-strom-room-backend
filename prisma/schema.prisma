@@ -1,4 +1,3 @@
-// Phase 1: User + RefreshToken. Additional models added per README phase.
 // Prisma fields stay camelCase in TypeScript; DB columns/tables use snake_case via @map / @@map.
 
 generator client {

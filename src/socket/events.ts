@@ -1,6 +1,5 @@
 /**
  * Socket.IO event name constants.
- * Handlers are registered in Phase 8+.
  */
 export const SOCKET_EVENTS = {
   WORKSPACE_JOIN: 'workspace:join',
