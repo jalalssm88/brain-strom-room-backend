@@ -7,6 +7,7 @@ import { emailVerificationTokenRepository } from '../repositories/emailVerificat
 import { passwordResetTokenRepository } from '../repositories/passwordResetToken.repository';
 import { emailService } from './email.service';
 import { googleAuthService } from './googleAuth.service';
+import { subscriptionService } from './subscription.service';
 import { hashPassword, comparePassword, hashToken } from '../utils/hash';
 import { generateSecureToken } from '../utils/token';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';
@@ -88,6 +89,7 @@ export class AuthService {
     });
 
     await this.sendVerificationEmail(user.email);
+    await subscriptionService.ensureFreeSubscription(user.id);
 
     const tokens = await this.issueTokens(user);
     return { user: userResponse(user), tokens };
@@ -270,6 +272,7 @@ export class AuthService {
           providerId: profile.sub,
           avatar: profile.picture,
         });
+        await subscriptionService.ensureFreeSubscription(user.id);
       }
     } else {
       user = await userRepository.updateOAuthProfile(user.id, {

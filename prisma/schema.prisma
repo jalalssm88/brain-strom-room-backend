@@ -16,6 +16,49 @@ enum AuthProvider {
   @@map("auth_provider")
 }
 
+enum MemberRole {
+  ADMIN
+  EDITOR
+  VIEWER
+
+  @@map("member_role")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+
+  @@map("subscription_status")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+
+  @@map("invitation_status")
+}
+
+enum NotificationType {
+  WORKSPACE_INVITE
+  COMMENT_ADDED
+  WORKSPACE_RENAMED
+  SUBSCRIPTION_EXPIRING
+
+  @@map("notification_type")
+}
+
+enum NotificationRefType {
+  WORKSPACE
+  NOTE
+  INVITATION
+  SUBSCRIPTION
+
+  @@map("notification_ref_type")
+}
+
 model User {
   id            Int          @id @default(autoincrement())
   fullName      String       @map("full_name")
@@ -28,7 +71,11 @@ model User {
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  refreshTokens RefreshToken[]
+  ownedWorkspaces Workspace[]        @relation("WorkspaceOwner")
+  memberships     WorkspaceMember[]
+  subscription    UserSubscription?
+  refreshTokens   RefreshToken[]
+  notifications   Notification[]
 
   @@unique([provider, providerId])
   @@map("users")
@@ -64,4 +111,101 @@ model PasswordResetToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("password_reset_tokens")
+}
+
+model Workspace {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  ownerId     Int      @map("owner_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  owner       User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members     WorkspaceMember[]
+  invitations Invitation[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          Int        @id @default(autoincrement())
+  workspaceId Int        @map("workspace_id")
+  userId      Int        @map("user_id")
+  role        MemberRole
+  joinedAt    DateTime   @default(now()) @map("joined_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Invitation {
+  id           Int              @id @default(autoincrement())
+  workspaceId  Int              @map("workspace_id")
+  invitedById  Int              @map("invited_by_id")
+  inviteeEmail String           @map("invitee_email")
+  inviteeId    Int?             @map("invitee_id")
+  role         MemberRole
+  status       InvitationStatus @default(PENDING)
+  tokenHash    String           @unique @map("token_hash")
+  expiresAt    DateTime         @map("expires_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([inviteeEmail, status])
+  @@map("invitations")
+}
+
+model Notification {
+  id            Int                  @id @default(autoincrement())
+  userId        Int                  @map("user_id")
+  type          NotificationType
+  title         String
+  message       String
+  referenceType NotificationRefType? @map("reference_type")
+  referenceId   Int?                 @map("reference_id")
+  isRead        Boolean              @default(false) @map("is_read")
+  createdAt     DateTime             @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model SubscriptionPlan {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  stripePriceId  String?  @map("stripe_price_id")
+  priceMonthly   Int      @default(0) @map("price_monthly")
+  workspaceLimit Int?     @map("workspace_limit")
+  features       Json
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  subscriptions UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+model UserSubscription {
+  id                   Int                @id @default(autoincrement())
+  userId               Int                @unique @map("user_id")
+  planId               Int                @map("plan_id")
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  stripeSubscriptionId String?            @map("stripe_subscription_id")
+  currentPeriodStart   DateTime?          @map("current_period_start")
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@map("user_subscriptions")
 }

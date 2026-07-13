@@ -1,6 +1,5 @@
 import { body } from 'express-validator';
 
-// Preserve dots in Gmail addresses — validator's default strips them (gmail_remove_dots: true).
 const emailField = () =>
   body('email')
     .trim()
@@ -8,16 +7,19 @@ const emailField = () =>
     .withMessage('Valid email is required')
     .normalizeEmail({ gmail_remove_dots: false });
 
-export const signupValidation = [
-  body('fullName').trim().notEmpty().withMessage('Full name is required').isLength({ max: 100 }),
-  emailField(),
+const passwordField = () =>
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters')
     .matches(/[A-Za-z]/)
     .withMessage('Password must contain at least one letter')
     .matches(/[0-9]/)
-    .withMessage('Password must contain at least one number'),
+    .withMessage('Password must contain at least one number');
+
+export const signupValidation = [
+  body('fullName').trim().notEmpty().withMessage('Full name is required').isLength({ max: 100 }),
+  emailField(),
+  passwordField(),
 ];
 
 export const loginValidation = [
@@ -39,11 +41,5 @@ export const forgotPasswordValidation = [
 
 export const resetPasswordValidation = [
   body('token').notEmpty().withMessage('Reset token is required'),
-  body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
-    .matches(/[A-Za-z]/)
-    .withMessage('Password must contain at least one letter')
-    .matches(/[0-9]/)
-    .withMessage('Password must contain at least one number'),
+  passwordField(),
 ];

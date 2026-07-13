@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
-import { verificationEmailTemplate, passwordResetEmailTemplate } from '../utils/emailTemplates';
+import { verificationEmailTemplate, passwordResetEmailTemplate, workspaceInviteEmailTemplate } from '../utils/emailTemplates';
 
 interface SendMailOptions {
   to: string;
@@ -62,6 +62,17 @@ export class EmailService {
   async sendPasswordResetEmail(email: string, token: string): Promise<void> {
     const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
     const template = passwordResetEmailTemplate(resetUrl);
+    await this.sendMail({ to: email, ...template });
+  }
+
+  async sendWorkspaceInviteEmail(
+    email: string,
+    workspaceName: string,
+    role: string,
+    token: string,
+  ): Promise<void> {
+    const acceptUrl = `${env.FRONTEND_URL}/invitations/accept?token=${token}`;
+    const template = workspaceInviteEmailTemplate(workspaceName, role, acceptUrl);
     await this.sendMail({ to: email, ...template });
   }
 }

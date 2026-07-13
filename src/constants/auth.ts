@@ -2,3 +2,4 @@ export const BCRYPT_ROUNDS = 12;
 
 export const EMAIL_VERIFICATION_EXPIRES_HOURS = 24;
 export const PASSWORD_RESET_EXPIRES_HOURS = 1;
+export const INVITATION_EXPIRES_HOURS = 168; // 7 days

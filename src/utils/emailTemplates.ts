@@ -22,3 +22,18 @@ export const passwordResetEmailTemplate = (resetUrl: string): { subject: string;
     <p>If you did not request this, you can ignore this email.</p>
   `,
 });
+
+export const workspaceInviteEmailTemplate = (
+  workspaceName: string,
+  role: string,
+  acceptUrl: string,
+): { subject: string; text: string; html: string } => ({
+  subject: `You're invited to join ${workspaceName}`,
+  text: `You've been invited to join the workspace "${workspaceName}" as ${role}.\n\nAccept the invitation:\n${acceptUrl}\n\nThis link expires in 7 days.`,
+  html: `
+    <p>You've been invited to join <strong>${workspaceName}</strong> as <strong>${role}</strong>.</p>
+    <p><a href="${acceptUrl}">Accept invitation</a></p>
+    <p>Or copy this URL into your browser:<br>${acceptUrl}</p>
+    <p>This link expires in 7 days.</p>
+  `,
+});
