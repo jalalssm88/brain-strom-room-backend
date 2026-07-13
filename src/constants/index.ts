@@ -5,5 +5,5 @@ export const WORKSPACE_LIMITS = {
 } as const;
 
 /** Default pagination */
-export const DEFAULT_PAGE_LIMIT = 50;
+export const DEFAULT_PAGE_LIMIT = 20;
 export const MAX_PAGE_LIMIT = 100;

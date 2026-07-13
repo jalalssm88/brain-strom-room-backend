@@ -40,7 +40,11 @@ export class InvitationRepository {
     });
   }
 
-  async findPendingByEmail(email: string): Promise<InvitationWithWorkspace[]> {
+  async findPendingByEmail(
+    email: string,
+    offset: number,
+    limit: number,
+  ): Promise<InvitationWithWorkspace[]> {
     return prisma.invitation.findMany({
       where: {
         inviteeEmail: email.toLowerCase(),
@@ -51,6 +55,18 @@ export class InvitationRepository {
         workspace: { select: { id: true, name: true, description: true, ownerId: true } },
       },
       orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
+    });
+  }
+
+  async countPendingByEmail(email: string): Promise<number> {
+    return prisma.invitation.count({
+      where: {
+        inviteeEmail: email.toLowerCase(),
+        status: InvitationStatus.PENDING,
+        expiresAt: { gt: new Date() },
+      },
     });
   }
 

@@ -1,5 +1,6 @@
 import { body, param, query } from 'express-validator';
 import { WorkspaceTab } from '../types/workspace.types';
+import { paginationValidation } from './pagination.validation';
 
 const workspaceTabs: WorkspaceTab[] = ['owned', 'shared', 'pending'];
 
@@ -8,6 +9,7 @@ export const listWorkspacesValidation = [
     .optional()
     .isIn(workspaceTabs)
     .withMessage('tab must be one of: owned, shared, pending'),
+  ...paginationValidation,
 ];
 
 export const createWorkspaceValidation = [

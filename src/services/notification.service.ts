@@ -1,7 +1,13 @@
 import { NotificationRefType, NotificationType } from '@prisma/client';
 import { NotFoundError } from '../errors/AppError';
 import { notificationRepository } from '../repositories/notification.repository';
-import { CreateNotificationData, NotificationResponse } from '../types/notification.types';
+import { buildPaginatedResult } from '../helpers/pagination';
+import { PaginatedResult, PaginationParams } from '../types/pagination.types';
+import {
+  CreateNotificationData,
+  NotificationListResult,
+  NotificationResponse,
+} from '../types/notification.types';
 
 const toNotificationResponse = (notification: {
   id: number;
@@ -29,9 +35,20 @@ export class NotificationService {
     return toNotificationResponse(notification);
   }
 
-  async listForUser(userId: number): Promise<NotificationResponse[]> {
-    const notifications = await notificationRepository.findByUserId(userId);
-    return notifications.map(toNotificationResponse);
+  async listForUser(userId: number, pagination: PaginationParams): Promise<NotificationListResult> {
+    const [notifications, total, unreadCount] = await Promise.all([
+      notificationRepository.findByUserId(userId, pagination.offset, pagination.limit),
+      notificationRepository.countByUserId(userId),
+      notificationRepository.countUnreadByUserId(userId),
+    ]);
+
+    const result = buildPaginatedResult(
+      notifications.map(toNotificationResponse),
+      total,
+      pagination,
+    );
+
+    return { ...result, unreadCount };
   }
 
   async markAsRead(userId: number, notificationId: number): Promise<NotificationResponse> {

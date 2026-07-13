@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../helpers/asyncHandler';
+import { parsePagination } from '../helpers/pagination';
 import { workspaceService } from '../services/workspace.service';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, WorkspaceTab } from '../types/workspace.types';
 import { InviteMemberDto } from '../types/invitation.types';
@@ -8,11 +9,28 @@ import { MemberRole } from '@prisma/client';
 export class WorkspaceController {
   list = asyncHandler(async (req: Request, res: Response) => {
     const tab = (req.query.tab as WorkspaceTab | undefined) ?? 'owned';
-    const workspaces = await workspaceService.listWorkspaces(req.userId!, tab);
+    const pagination = parsePagination(req.query);
+    const result = await workspaceService.listWorkspaces(req.userId!, tab, pagination);
 
     res.status(200).json({
       success: true,
-      data: { workspaces },
+      data: {
+        workspaces: result.items,
+        total: result.total,
+        offset: result.offset,
+        limit: result.limit,
+        hasMore: result.hasMore,
+      },
+    });
+  });
+
+  getById = asyncHandler(async (req: Request, res: Response) => {
+    const workspaceId = Number(req.params.id);
+    const workspace = await workspaceService.getWorkspace(workspaceId, req.userId!);
+
+    res.status(200).json({
+      success: true,
+      data: { workspace },
     });
   });
 

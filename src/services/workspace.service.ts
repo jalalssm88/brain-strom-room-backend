@@ -6,6 +6,8 @@ import { userRepository } from '../repositories/user.repository';
 import { subscriptionService } from './subscription.service';
 import { invitationService } from './invitation.service';
 import { prisma } from '../config/database';
+import { buildPaginatedResult } from '../helpers/pagination';
+import { PaginatedResult, PaginationParams } from '../types/pagination.types';
 import {
   CreateWorkspaceDto,
   UpdateWorkspaceDto,
@@ -42,32 +44,70 @@ const toMemberResponse = (
 });
 
 export class WorkspaceService {
-  async listWorkspaces(userId: number, tab: WorkspaceTab): Promise<WorkspaceResponse[]> {
+  async listWorkspaces(
+    userId: number,
+    tab: WorkspaceTab,
+    pagination: PaginationParams,
+  ): Promise<PaginatedResult<WorkspaceResponse>> {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError('User not found');
     }
 
     if (tab === 'pending') {
-      return invitationService.listPendingForUser(userId, user.email);
+      return invitationService.listPendingForUser(userId, user.email, pagination);
     }
 
     if (tab === 'owned') {
-      const workspaces = await workspaceRepository.findOwnedByUserId(userId);
-      return workspaces.map((workspace) => toWorkspaceResponse(workspace, MemberRole.ADMIN));
+      const [workspaces, total] = await Promise.all([
+        workspaceRepository.findOwnedByUserId(userId, pagination.offset, pagination.limit),
+        workspaceRepository.countOwnedByUserId(userId),
+      ]);
+
+      const items = workspaces.map((workspace) => toWorkspaceResponse(workspace, MemberRole.ADMIN));
+      return buildPaginatedResult(items, total, pagination);
     }
 
-    const workspaces = await workspaceRepository.findSharedByUserId(userId);
-    const results: WorkspaceResponse[] = [];
+    const [workspaces, total] = await Promise.all([
+      workspaceRepository.findSharedByUserId(userId, pagination.offset, pagination.limit),
+      workspaceRepository.countSharedByUserId(userId),
+    ]);
+
+    const items: WorkspaceResponse[] = [];
 
     for (const workspace of workspaces) {
       const membership = await workspaceMemberRepository.findByWorkspaceAndUser(workspace.id, userId);
       if (membership) {
-        results.push(toWorkspaceResponse(workspace, membership.role));
+        items.push(toWorkspaceResponse(workspace, membership.role));
       }
     }
 
-    return results;
+    return buildPaginatedResult(items, total, pagination);
+  }
+
+  async getWorkspace(workspaceId: number, userId: number): Promise<WorkspaceResponse> {
+    const membership = await workspaceMemberRepository.findByWorkspaceAndUser(workspaceId, userId);
+    if (!membership) {
+      throw new ForbiddenError('You are not a member of this workspace');
+    }
+
+    const workspace = await workspaceRepository.findById(workspaceId);
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found');
+    }
+
+    const memberCount = await prisma.workspaceMember.count({ where: { workspaceId } });
+
+    return {
+      id: workspace.id,
+      name: workspace.name,
+      description: workspace.description,
+      ownerId: workspace.ownerId,
+      role: membership.role,
+      memberCount,
+      createdAt: workspace.createdAt.toISOString(),
+      updatedAt: workspace.updatedAt.toISOString(),
+    };
   }
 
   async createWorkspace(userId: number, dto: CreateWorkspaceDto): Promise<WorkspaceResponse> {

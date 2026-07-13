@@ -7,11 +7,21 @@ export class NotificationRepository {
     return prisma.notification.create({ data });
   }
 
-  async findByUserId(userId: number): Promise<Notification[]> {
+  async findByUserId(userId: number, offset: number, limit: number): Promise<Notification[]> {
     return prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
     });
+  }
+
+  async countByUserId(userId: number): Promise<number> {
+    return prisma.notification.count({ where: { userId } });
+  }
+
+  async countUnreadByUserId(userId: number): Promise<number> {
+    return prisma.notification.count({ where: { userId, isRead: false } });
   }
 
   async findByIdAndUserId(id: number, userId: number): Promise<Notification | null> {

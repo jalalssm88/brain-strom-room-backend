@@ -28,15 +28,29 @@ export class WorkspaceRepository {
     return prisma.workspace.count({ where: { ownerId } });
   }
 
-  async findOwnedByUserId(userId: number): Promise<WorkspaceWithMemberCount[]> {
+  async findOwnedByUserId(
+    userId: number,
+    offset: number,
+    limit: number,
+  ): Promise<WorkspaceWithMemberCount[]> {
     return prisma.workspace.findMany({
       where: { ownerId: userId },
       include: { _count: { select: { members: true } } },
       orderBy: { updatedAt: 'desc' },
+      skip: offset,
+      take: limit,
     });
   }
 
-  async findSharedByUserId(userId: number): Promise<WorkspaceWithMemberCount[]> {
+  async countOwnedByUserId(userId: number): Promise<number> {
+    return prisma.workspace.count({ where: { ownerId: userId } });
+  }
+
+  async findSharedByUserId(
+    userId: number,
+    offset: number,
+    limit: number,
+  ): Promise<WorkspaceWithMemberCount[]> {
     return prisma.workspace.findMany({
       where: {
         ownerId: { not: userId },
@@ -44,6 +58,17 @@ export class WorkspaceRepository {
       },
       include: { _count: { select: { members: true } } },
       orderBy: { updatedAt: 'desc' },
+      skip: offset,
+      take: limit,
+    });
+  }
+
+  async countSharedByUserId(userId: number): Promise<number> {
+    return prisma.workspace.count({
+      where: {
+        ownerId: { not: userId },
+        members: { some: { userId } },
+      },
     });
   }
 

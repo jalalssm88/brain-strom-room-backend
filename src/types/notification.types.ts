@@ -1,5 +1,7 @@
 import { NotificationRefType, NotificationType } from '@prisma/client';
 
+import { PaginatedResult } from './pagination.types';
+
 export interface NotificationResponse {
   id: number;
   type: NotificationType;
@@ -18,4 +20,8 @@ export interface CreateNotificationData {
   message: string;
   referenceType?: NotificationRefType;
   referenceId?: number;
+}
+
+export interface NotificationListResult extends PaginatedResult<NotificationResponse> {
+  unreadCount: number;
 }

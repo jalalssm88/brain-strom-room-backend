@@ -19,6 +19,7 @@ router.use(authenticate);
 
 router.get('/', validate(listWorkspacesValidation), workspaceController.list);
 router.post('/', validate(createWorkspaceValidation), workspaceController.create);
+router.get('/:id', validate(workspaceIdParamValidation), workspaceController.getById);
 router.patch(
   '/:id',
   validate(updateWorkspaceValidation),

@@ -1,9 +1,4 @@
-import {
-  InvitationStatus,
-  MemberRole,
-  NotificationRefType,
-  NotificationType,
-} from '@prisma/client';
+import { InvitationStatus, MemberRole, NotificationRefType, NotificationType } from '@prisma/client';
 import {
   BadRequestError,
   ConflictError,
@@ -20,6 +15,8 @@ import { notificationService } from './notification.service';
 import { hashToken } from '../utils/hash';
 import { generateSecureToken } from '../utils/token';
 import { prisma } from '../config/database';
+import { buildPaginatedResult } from '../helpers/pagination';
+import { PaginatedResult, PaginationParams } from '../types/pagination.types';
 import { InviteMemberDto, RespondInvitationDto } from '../types/invitation.types';
 import { WorkspaceResponse } from '../types/workspace.types';
 
@@ -139,10 +136,17 @@ export class InvitationService {
     return this.acceptInvitation(userId, invitation);
   }
 
-  async listPendingForUser(userId: number, email: string): Promise<WorkspaceResponse[]> {
-    const invitations = await invitationRepository.findPendingByEmail(email);
+  async listPendingForUser(
+    _userId: number,
+    email: string,
+    pagination: PaginationParams,
+  ): Promise<PaginatedResult<WorkspaceResponse>> {
+    const [invitations, total] = await Promise.all([
+      invitationRepository.findPendingByEmail(email, pagination.offset, pagination.limit),
+      invitationRepository.countPendingByEmail(email),
+    ]);
 
-    return invitations.map((invitation) => ({
+    const items = invitations.map((invitation) => ({
       id: invitation.workspace.id,
       name: invitation.workspace.name,
       description: invitation.workspace.description,
@@ -155,6 +159,8 @@ export class InvitationService {
       invitedBy: undefined,
       expiresAt: invitation.expiresAt.toISOString(),
     }));
+
+    return buildPaginatedResult(items, total, pagination);
   }
 
   private async getValidInvitationByToken(token: string) {
