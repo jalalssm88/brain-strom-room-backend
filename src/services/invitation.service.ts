@@ -52,15 +52,17 @@ export class InvitationService {
       throw new BadRequestError('You cannot invite yourself');
     }
 
-    const existingMember = await userRepository.findByEmail(inviteeEmail);
-    if (existingMember) {
-      const membership = await workspaceMemberRepository.findByWorkspaceAndUser(
-        workspaceId,
-        existingMember.id,
-      );
-      if (membership) {
-        throw new ConflictError('User is already a member of this workspace');
-      }
+    const invitee = await userRepository.findByEmail(inviteeEmail);
+    if (!invitee) {
+      throw new NotFoundError('User not found');
+    }
+
+    const membership = await workspaceMemberRepository.findByWorkspaceAndUser(
+      workspaceId,
+      invitee.id,
+    );
+    if (membership) {
+      throw new ConflictError('User is already a member of this workspace');
     }
 
     const existingInvite = await invitationRepository.findPendingByWorkspaceAndEmail(
@@ -78,7 +80,7 @@ export class InvitationService {
       workspaceId,
       invitedById,
       inviteeEmail,
-      inviteeId: existingMember?.id ?? null,
+      inviteeId: invitee.id,
       role: dto.role,
       tokenHash,
       expiresAt: getInvitationExpiry(),
@@ -91,28 +93,20 @@ export class InvitationService {
       token,
     );
 
-    if (existingMember) {
-      await notificationService.create({
-        userId: existingMember.id,
-        type: NotificationType.WORKSPACE_INVITE,
-        title: 'Workspace invitation',
-        message: `${inviter.fullName} invited you to join "${workspace.name}" as ${dto.role}`,
-        referenceType: NotificationRefType.INVITATION,
-        referenceId: invitation.id,
-      });
-    }
+    await notificationService.create({
+      userId: invitee.id,
+      type: NotificationType.WORKSPACE_INVITE,
+      title: 'Workspace invitation',
+      message: `${inviter.fullName} invited you to join "${workspace.name}" as ${dto.role}`,
+      referenceType: NotificationRefType.INVITATION,
+      referenceId: invitation.id,
+    });
   }
 
   async acceptByToken(userId: number, token: string): Promise<WorkspaceResponse> {
     const invitation = await this.getValidInvitationByToken(token);
     await this.assertInvitee(userId, invitation.inviteeEmail);
     return this.acceptInvitation(userId, invitation);
-  }
-
-  async declineByToken(userId: number, token: string): Promise<void> {
-    const invitation = await this.getValidInvitationByToken(token);
-    await this.assertInvitee(userId, invitation.inviteeEmail);
-    await invitationRepository.updateStatus(invitation.id, InvitationStatus.DECLINED);
   }
 
   async respond(userId: number, dto: RespondInvitationDto): Promise<WorkspaceResponse | void> {

@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceMember, MemberRole } from '@prisma/client';
+import { Workspace, MemberRole } from '@prisma/client';
 import { prisma } from '../config/database';
 
 export interface CreateWorkspaceData {
@@ -8,6 +8,10 @@ export interface CreateWorkspaceData {
 }
 
 export type WorkspaceWithMemberCount = Workspace & { _count: { members: number } };
+
+export type WorkspaceWithMemberRole = WorkspaceWithMemberCount & {
+  members: { role: MemberRole }[];
+};
 
 export class WorkspaceRepository {
   async create(data: CreateWorkspaceData): Promise<Workspace> {
@@ -50,13 +54,20 @@ export class WorkspaceRepository {
     userId: number,
     offset: number,
     limit: number,
-  ): Promise<WorkspaceWithMemberCount[]> {
+  ): Promise<WorkspaceWithMemberRole[]> {
     return prisma.workspace.findMany({
       where: {
         ownerId: { not: userId },
         members: { some: { userId } },
       },
-      include: { _count: { select: { members: true } } },
+      include: {
+        _count: { select: { members: true } },
+        members: {
+          where: { userId },
+          select: { role: true },
+          take: 1,
+        },
+      },
       orderBy: { updatedAt: 'desc' },
       skip: offset,
       take: limit,

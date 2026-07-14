@@ -34,6 +34,7 @@ export const requireWorkspaceMember = async (
 };
 
 export const requireWorkspaceRole = (...roles: MemberRole[]) => {
+  console.log('requireWorkspaceRole', roles);
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const workspaceId = parseWorkspaceId(req);

@@ -35,7 +35,7 @@ export class NotificationService {
     return toNotificationResponse(notification);
   }
 
-  async listForUser(userId: number, pagination: PaginationParams): Promise<NotificationListResult> {
+  async getNotifications(userId: number, pagination: PaginationParams): Promise<NotificationListResult> {
     const [notifications, total, unreadCount] = await Promise.all([
       notificationRepository.findByUserId(userId, pagination.offset, pagination.limit),
       notificationRepository.countByUserId(userId),

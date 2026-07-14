@@ -44,7 +44,7 @@ const toMemberResponse = (
 });
 
 export class WorkspaceService {
-  async listWorkspaces(
+  async getWorkspaceslist(
     userId: number,
     tab: WorkspaceTab,
     pagination: PaginationParams,
@@ -73,19 +73,14 @@ export class WorkspaceService {
       workspaceRepository.countSharedByUserId(userId),
     ]);
 
-    const items: WorkspaceResponse[] = [];
-
-    for (const workspace of workspaces) {
-      const membership = await workspaceMemberRepository.findByWorkspaceAndUser(workspace.id, userId);
-      if (membership) {
-        items.push(toWorkspaceResponse(workspace, membership.role));
-      }
-    }
+    const items = workspaces.map((workspace) =>
+      toWorkspaceResponse(workspace, workspace.members[0].role),
+    );
 
     return buildPaginatedResult(items, total, pagination);
   }
 
-  async getWorkspace(workspaceId: number, userId: number): Promise<WorkspaceResponse> {
+  async getWorkspaceById(workspaceId: number, userId: number): Promise<WorkspaceResponse> {
     const membership = await workspaceMemberRepository.findByWorkspaceAndUser(workspaceId, userId);
     if (!membership) {
       throw new ForbiddenError('You are not a member of this workspace');
@@ -150,7 +145,7 @@ export class WorkspaceService {
     };
   }
 
-  async renameWorkspace(
+  async updateWorkspace(
     workspaceId: number,
     userId: number,
     dto: UpdateWorkspaceDto,

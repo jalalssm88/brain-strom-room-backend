@@ -11,16 +11,7 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post(
-  '/:token/accept',
-  validate(invitationTokenValidation),
-  invitationController.acceptByToken,
-);
-router.post(
-  '/:token/decline',
-  validate(invitationTokenValidation),
-  invitationController.declineByToken,
-);
+router.post('/:token/accept',validate(invitationTokenValidation),invitationController.acceptByToken);
 router.post('/respond', validate(respondInvitationValidation), invitationController.respond);
 
 export default router;

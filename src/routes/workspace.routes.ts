@@ -17,20 +17,20 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', validate(listWorkspacesValidation), workspaceController.list);
-router.post('/', validate(createWorkspaceValidation), workspaceController.create);
-router.get('/:id', validate(workspaceIdParamValidation), workspaceController.getById);
+router.get('/', validate(listWorkspacesValidation), workspaceController.getWorkspaceslist);
+router.post('/', validate(createWorkspaceValidation), workspaceController.createWorkspace);
+router.get('/:id', validate(workspaceIdParamValidation), workspaceController.getWorkspaceById);
 router.patch(
   '/:id',
   validate(updateWorkspaceValidation),
   requireWorkspaceRole(MemberRole.ADMIN),
-  workspaceController.update,
+  workspaceController.updateWorkspace,
 );
-router.delete('/:id', validate(workspaceIdParamValidation), workspaceController.delete);
+router.delete('/:id', validate(workspaceIdParamValidation), workspaceController.deleteWorkspace);
 router.get(
   '/:id/members',
   validate(workspaceIdParamValidation),
-  workspaceController.listMembers,
+  workspaceController.getWorkspaceMembers,
 );
 router.post(
   '/:id/invite',

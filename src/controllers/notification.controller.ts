@@ -4,9 +4,9 @@ import { parsePagination } from '../helpers/pagination';
 import { notificationService } from '../services/notification.service';
 
 export class NotificationController {
-  list = asyncHandler(async (req: Request, res: Response) => {
+  getNotifications = asyncHandler(async (req: Request, res: Response) => {
     const pagination = parsePagination(req.query);
-    const result = await notificationService.listForUser(req.userId!, pagination);
+    const result = await notificationService.getNotifications(req.userId!, pagination);
 
     res.status(200).json({
       success: true,

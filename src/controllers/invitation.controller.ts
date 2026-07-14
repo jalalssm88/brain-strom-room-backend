@@ -13,15 +13,6 @@ export class InvitationController {
     });
   });
 
-  declineByToken = asyncHandler(async (req: Request, res: Response) => {
-    await invitationService.declineByToken(req.userId!, req.params.token as string);
-
-    res.status(200).json({
-      success: true,
-      data: { message: 'Invitation declined' },
-    });
-  });
-
   respond = asyncHandler(async (req: Request, res: Response) => {
     const dto: RespondInvitationDto = {
       invitationId: Number(req.body.invitationId),
