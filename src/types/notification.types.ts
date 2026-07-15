@@ -1,4 +1,4 @@
-import { NotificationRefType, NotificationType } from '@prisma/client';
+import { NotificationRefType, NotificationType } from '../prisma';
 
 import { PaginatedResult } from './pagination.types';
 

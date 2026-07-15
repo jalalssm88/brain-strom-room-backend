@@ -1,4 +1,4 @@
-import { MemberRole, WorkspaceMember, Prisma } from '@prisma/client';
+import { MemberRole, WorkspaceMember, Prisma } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreateWorkspaceMemberData {

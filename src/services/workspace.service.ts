@@ -1,4 +1,4 @@
-import { MemberRole } from '@prisma/client';
+import { MemberRole } from '../prisma';
 import { ForbiddenError, NotFoundError } from '../errors/AppError';
 import { workspaceRepository, WorkspaceWithMemberCount } from '../repositories/workspace.repository';
 import { workspaceMemberRepository } from '../repositories/workspaceMember.repository';

@@ -1,4 +1,4 @@
-import { InvitationStatus, MemberRole, Prisma } from '@prisma/client';
+import { InvitationStatus, MemberRole, Prisma } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreateInvitationData {

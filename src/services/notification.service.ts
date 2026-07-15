@@ -1,4 +1,4 @@
-import { NotificationRefType, NotificationType } from '@prisma/client';
+import { NotificationRefType, NotificationType } from '../prisma';
 import { NotFoundError } from '../errors/AppError';
 import { notificationRepository } from '../repositories/notification.repository';
 import { buildPaginatedResult } from '../helpers/pagination';

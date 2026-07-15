@@ -11,7 +11,8 @@ import {
 import { validate } from '../middlewares/validate';
 import { authenticate } from '../middlewares/authenticate';
 import { requireWorkspaceRole } from '../middlewares/requireWorkspaceRole';
-import { MemberRole } from '@prisma/client';
+import { MemberRole } from '../prisma';
+import noteRoutes from './note.routes';
 
 const router = Router();
 
@@ -44,5 +45,7 @@ router.delete(
   requireWorkspaceRole(MemberRole.ADMIN),
   workspaceController.removeMember,
 );
+
+router.use('/:id/notes', noteRoutes);
 
 export default router;

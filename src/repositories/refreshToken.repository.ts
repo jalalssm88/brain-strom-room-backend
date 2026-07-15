@@ -1,4 +1,4 @@
-import { RefreshToken } from '@prisma/client';
+import { RefreshToken } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreateRefreshTokenData {

@@ -1,4 +1,4 @@
-import { Notification } from '@prisma/client';
+import { Notification } from '../prisma';
 import { prisma } from '../config/database';
 import { CreateNotificationData } from '../types/notification.types';
 

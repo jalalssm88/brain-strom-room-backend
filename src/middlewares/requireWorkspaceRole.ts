@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { MemberRole } from '@prisma/client';
+import { MemberRole } from '../prisma';
 import { ForbiddenError, BadRequestError } from '../errors/AppError';
 import { workspaceMemberRepository } from '../repositories/workspaceMember.repository';
 
@@ -34,7 +34,6 @@ export const requireWorkspaceMember = async (
 };
 
 export const requireWorkspaceRole = (...roles: MemberRole[]) => {
-  console.log('requireWorkspaceRole', roles);
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const workspaceId = parseWorkspaceId(req);

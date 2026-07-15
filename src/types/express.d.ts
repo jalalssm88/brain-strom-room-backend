@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { WorkspaceMember } from '@prisma/client';
+import { WorkspaceMember } from '../prisma';
 
 declare global {
   namespace Express {

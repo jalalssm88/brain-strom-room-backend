@@ -1,4 +1,4 @@
-import { EmailVerificationToken } from '@prisma/client';
+import { EmailVerificationToken } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreateEmailVerificationTokenData {

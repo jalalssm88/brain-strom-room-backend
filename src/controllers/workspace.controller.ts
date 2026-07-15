@@ -4,7 +4,7 @@ import { parsePagination } from '../helpers/pagination';
 import { workspaceService } from '../services/workspace.service';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, WorkspaceTab } from '../types/workspace.types';
 import { InviteMemberDto } from '../types/invitation.types';
-import { MemberRole } from '@prisma/client';
+import { MemberRole } from '../prisma';
 
 export class WorkspaceController {
   getWorkspaceslist = asyncHandler(async (req: Request, res: Response) => {

@@ -2,6 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -76,6 +77,7 @@ model User {
   subscription    UserSubscription?
   refreshTokens   RefreshToken[]
   notifications   Notification[]
+  notes           Note[]
 
   @@unique([provider, providerId])
   @@map("users")
@@ -124,6 +126,7 @@ model Workspace {
   owner       User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members     WorkspaceMember[]
   invitations Invitation[]
+  notes       Note[]
 
   @@map("workspaces")
 }
@@ -175,6 +178,28 @@ model Notification {
 
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+model Note {
+  id          Int       @id @default(autoincrement())
+  workspaceId Int       @map("workspace_id")
+  createdById Int       @map("created_by_id")
+  title       String
+  content     String    @db.Text
+  color       String    @default("#FDE68A")
+  x           Float     @default(0)
+  y           Float     @default(0)
+  width       Float     @default(200)
+  height      Float     @default(150)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [createdById], references: [id])
+
+  @@index([workspaceId, deletedAt])
+  @@map("notes")
 }
 
 model SubscriptionPlan {

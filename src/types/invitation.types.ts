@@ -1,4 +1,4 @@
-import { MemberRole } from '@prisma/client';
+import { MemberRole } from '../prisma';
 
 export interface InviteMemberDto {
   email: string;

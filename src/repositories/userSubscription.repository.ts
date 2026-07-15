@@ -1,4 +1,4 @@
-import { UserSubscription, SubscriptionStatus } from '@prisma/client';
+import { UserSubscription, SubscriptionStatus } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreateUserSubscriptionData {

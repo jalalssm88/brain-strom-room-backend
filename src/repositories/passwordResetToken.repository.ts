@@ -1,4 +1,4 @@
-import { PasswordResetToken } from '@prisma/client';
+import { PasswordResetToken } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreatePasswordResetTokenData {

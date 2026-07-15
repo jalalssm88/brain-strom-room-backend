@@ -1,4 +1,4 @@
-import { AuthProvider, User } from '@prisma/client';
+import { AuthProvider, User } from '../prisma';
 import { BadRequestError, ConflictError, UnauthorizedError } from '../errors/AppError';
 import { EMAIL_VERIFICATION_EXPIRES_HOURS, PASSWORD_RESET_EXPIRES_HOURS } from '../constants/auth';
 import { userRepository } from '../repositories/user.repository';
@@ -8,6 +8,7 @@ import { passwordResetTokenRepository } from '../repositories/passwordResetToken
 import { emailService } from './email.service';
 import { googleAuthService } from './googleAuth.service';
 import { subscriptionService } from './subscription.service';
+import { userSubscriptionRepository } from '../repositories/userSubscription.repository';
 import { hashPassword, comparePassword, hashToken } from '../utils/hash';
 import { generateSecureToken } from '../utils/token';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';
@@ -151,7 +152,20 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
-    return userResponse(user);
+
+    await subscriptionService.ensureFreeSubscription(userId);
+    const subscription = await userSubscriptionRepository.findByUserId(userId);
+
+    return {
+      ...userResponse(user),
+      subscription: subscription
+        ? {
+            planName: subscription.plan.name,
+            status: subscription.status,
+            workspaceLimit: subscription.plan.workspaceLimit,
+          }
+        : null,
+    };
   }
 
   async verifyEmail(token: string): Promise<AuthUserResponse> {

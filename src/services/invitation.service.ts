@@ -1,4 +1,4 @@
-import { InvitationStatus, MemberRole, NotificationRefType, NotificationType } from '@prisma/client';
+import { InvitationStatus, MemberRole, NotificationRefType, NotificationType } from '../prisma';
 import {
   BadRequestError,
   ConflictError,

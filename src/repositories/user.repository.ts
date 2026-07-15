@@ -1,4 +1,4 @@
-import { AuthProvider, User } from '@prisma/client';
+import { AuthProvider, User } from '../prisma';
 import { prisma } from '../config/database';
 
 export interface CreateUserData {

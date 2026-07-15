@@ -1,4 +1,4 @@
-import { SubscriptionPlan } from '@prisma/client';
+import { SubscriptionPlan } from '../prisma';
 import { prisma } from '../config/database';
 import { PLAN_NAMES } from '../constants/subscription';
 import { WORKSPACE_LIMITS } from '../constants';

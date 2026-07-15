@@ -1,4 +1,4 @@
-import { MemberRole } from '@prisma/client';
+import { MemberRole } from '../prisma';
 
 export type WorkspaceTab = 'owned' | 'shared' | 'pending';
 
