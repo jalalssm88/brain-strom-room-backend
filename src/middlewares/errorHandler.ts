@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { AppError } from '../errors/AppError';
 import { ERROR_CODES } from '../errors/errorCodes';
 import { env } from '../config/env';
@@ -17,6 +18,21 @@ export const errorHandler = (
         code: err.code,
         message: err.message,
         ...(err.details !== undefined && { details: err.details }),
+      },
+    });
+    return;
+  }
+
+  if (err instanceof multer.MulterError) {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'Avatar image is too large (max 2MB)'
+        : err.message;
+    res.status(400).json({
+      success: false,
+      error: {
+        code: ERROR_CODES.VALIDATION_ERROR,
+        message,
       },
     });
     return;

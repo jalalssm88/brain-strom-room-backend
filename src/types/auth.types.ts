@@ -56,3 +56,9 @@ export interface ResetPasswordDto {
   token: string;
   password: string;
 }
+
+export interface UpdateProfileDto {
+  fullName: string;
+  /** New public path, `null` to clear, `undefined` to leave unchanged */
+  avatar?: string | null;
+}

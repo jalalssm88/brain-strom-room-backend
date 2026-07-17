@@ -7,9 +7,11 @@ import {
   verifyEmailValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
+  updateProfileValidation,
 } from "../validations/auth.validation";
 import { validate } from "../middlewares/validate";
 import { authenticate } from "../middlewares/authenticate";
+import { uploadAvatar } from "../middlewares/upload";
 
 const router = Router();
 
@@ -44,5 +46,12 @@ router.post(
 router.get("/google", authController.googleRedirect);
 router.get("/google/callback", authController.googleCallback);
 router.get("/me", authenticate, authController.me);
+router.patch(
+  "/profile",
+  authenticate,
+  uploadAvatar,
+  validate(updateProfileValidation),
+  authController.updateProfile,
+);
 
 export default router;

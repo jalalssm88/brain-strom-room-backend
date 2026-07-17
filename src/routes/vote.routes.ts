@@ -14,7 +14,7 @@ router.get(
   '/',
   validate(noteVotesValidation),
   requireWorkspaceMember,
-  voteController.listVotes,
+  voteController.getVoteslist,
 );
 
 router.post(

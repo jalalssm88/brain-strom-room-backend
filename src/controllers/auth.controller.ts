@@ -5,7 +5,8 @@ import { getGoogleAuthUrl } from '../config/google';
 import { authService } from '../services/auth.service';
 import { googleAuthService } from '../services/googleAuth.service';
 import { signOAuthState, verifyOAuthState } from '../utils/oauthState';
-import { LoginDto, SignupDto, ForgotPasswordDto, ResetPasswordDto } from '../types/auth.types';
+import { LoginDto, SignupDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto } from '../types/auth.types';
+import { toAvatarPublicPath } from '../middlewares/upload';
 
 const redirectToLoginWithError = (res: Response, errorCode: string): void => {
   res.redirect(`${env.FRONTEND_URL}/login?error=${errorCode}`);
@@ -63,6 +64,29 @@ export class AuthController {
 
   me = asyncHandler(async (req: Request, res: Response) => {
     const user = await authService.getCurrentUser(req.userId!);
+
+    res.status(200).json({
+      success: true,
+      data: { user },
+    });
+  });
+
+  updateProfile = asyncHandler(async (req: Request, res: Response) => {
+    let avatar: string | null | undefined = undefined;
+
+    if (req.file) {
+      avatar = toAvatarPublicPath(req.file.filename);
+    } else if (Object.prototype.hasOwnProperty.call(req.body, 'avatar')) {
+      const value = req.body.avatar;
+      avatar = value === '' || value === null || value === 'null' ? null : undefined;
+    }
+
+    const dto: UpdateProfileDto = {
+      fullName: req.body.fullName,
+      avatar,
+    };
+
+    const user = await authService.updateProfile(req.userId!, dto);
 
     res.status(200).json({
       success: true,

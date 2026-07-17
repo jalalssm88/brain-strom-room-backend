@@ -4,3 +4,8 @@ src/generated/
 .env
 *.log
 .DS_Store
+uploads/*
+!uploads/.gitkeep
+!uploads/avatars/
+uploads/avatars/*
+!uploads/avatars/.gitkeep

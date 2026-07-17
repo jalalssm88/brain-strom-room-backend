@@ -99,6 +99,19 @@ export class UserRepository {
     });
   }
 
+  async updateProfile(
+    id: number,
+    data: { fullName: string; avatar?: string | null },
+  ): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        fullName: data.fullName,
+        ...(data.avatar !== undefined ? { avatar: data.avatar } : {}),
+      },
+    });
+  }
+
   async markEmailVerified(id: number): Promise<User> {
     return prisma.user.update({
       where: { id },

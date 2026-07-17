@@ -3,7 +3,7 @@ import { asyncHandler } from '../helpers/asyncHandler';
 import { voteService } from '../services/vote.service';
 
 export class VoteController {
-  listVotes = asyncHandler(async (req: Request, res: Response) => {
+  getVoteslist = asyncHandler(async (req: Request, res: Response) => {
     const summary = await voteService.listVotes(
       req.workspaceId!,
       Number(req.params.noteId),

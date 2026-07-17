@@ -9,6 +9,7 @@ import { emailService } from './email.service';
 import { googleAuthService } from './googleAuth.service';
 import { subscriptionService } from './subscription.service';
 import { userSubscriptionRepository } from '../repositories/userSubscription.repository';
+import { deleteLocalAvatar } from '../middlewares/upload';
 import { hashPassword, comparePassword, hashToken } from '../utils/hash';
 import { generateSecureToken } from '../utils/token';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';
@@ -21,6 +22,7 @@ import {
   SignupDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  UpdateProfileDto,
 } from '../types/auth.types';
 import { GoogleProfile } from '../types/google.types';
 
@@ -158,6 +160,35 @@ export class AuthService {
 
     return {
       ...userResponse(user),
+      subscription: subscription
+        ? {
+            planName: subscription.plan.name,
+            status: subscription.status,
+            workspaceLimit: subscription.plan.workspaceLimit,
+          }
+        : null,
+    };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto): Promise<AuthUserResponse> {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedError('User not found');
+    }
+
+    if (dto.avatar !== undefined) {
+      deleteLocalAvatar(user.avatar);
+    }
+
+    const updated = await userRepository.updateProfile(userId, {
+      fullName: dto.fullName.trim(),
+      avatar: dto.avatar,
+    });
+
+    const subscription = await userSubscriptionRepository.findByUserId(userId);
+
+    return {
+      ...userResponse(updated),
       subscription: subscription
         ? {
             planName: subscription.plan.name,

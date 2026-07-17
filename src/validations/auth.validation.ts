@@ -43,3 +43,12 @@ export const resetPasswordValidation = [
   body('token').notEmpty().withMessage('Reset token is required'),
   passwordField(),
 ];
+
+export const updateProfileValidation = [
+  body('fullName')
+    .trim()
+    .notEmpty()
+    .withMessage('Full name is required')
+    .isLength({ max: 100 })
+    .withMessage('Full name must be at most 100 characters'),
+];
