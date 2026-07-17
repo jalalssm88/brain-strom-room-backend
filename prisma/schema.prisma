@@ -78,6 +78,8 @@ model User {
   refreshTokens   RefreshToken[]
   notifications   Notification[]
   notes           Note[]
+  comments        Comment[]
+  votes           Vote[]
 
   @@unique([provider, providerId])
   @@map("users")
@@ -197,9 +199,39 @@ model Note {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   author    User      @relation(fields: [createdById], references: [id])
+  comments  Comment[]
+  votes     Vote[]
 
   @@index([workspaceId, deletedAt])
   @@map("notes")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  noteId    Int      @map("note_id")
+  userId    Int      @map("user_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  note   Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [userId], references: [id])
+
+  @@index([noteId])
+  @@map("comments")
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  noteId    Int      @map("note_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([noteId, userId])
+  @@map("votes")
 }
 
 model SubscriptionPlan {

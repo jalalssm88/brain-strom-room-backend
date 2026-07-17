@@ -5,7 +5,7 @@ import { CreateNoteDto, UpdateNoteDto } from '../types/note.types';
 
 export class NoteController {
   getNoteslist = asyncHandler(async (req: Request, res: Response) => {
-    const notes = await noteService.listNotes(req.workspaceId!);
+    const notes = await noteService.listNotes(req.workspaceId!, req.userId!);
 
     res.status(200).json({
       success: true,

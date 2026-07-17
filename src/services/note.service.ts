@@ -1,13 +1,14 @@
 import { MemberRole } from '../prisma';
 import { ForbiddenError, NotFoundError } from '../errors/AppError';
 import { noteRepository, NoteWithAuthor } from '../repositories/note.repository';
+import { voteRepository } from '../repositories/vote.repository';
 import {
   CreateNoteDto,
   NoteResponse,
   UpdateNoteDto,
 } from '../types/note.types';
 
-const toNoteResponse = (note: NoteWithAuthor): NoteResponse => ({
+const toNoteResponse = (note: NoteWithAuthor, hasVoted = false): NoteResponse => ({
   id: note.id,
   workspaceId: note.workspaceId,
   createdById: note.createdById,
@@ -19,6 +20,9 @@ const toNoteResponse = (note: NoteWithAuthor): NoteResponse => ({
   width: note.width,
   height: note.height,
   authorName: note.author.fullName,
+  voteCount: note._count.votes,
+  commentCount: note._count.comments,
+  hasVoted,
   createdAt: note.createdAt.toISOString(),
   updatedAt: note.updatedAt.toISOString(),
 });
@@ -27,9 +31,15 @@ const canCreateOrEditNotes = (role: MemberRole): boolean =>
   role === MemberRole.ADMIN || role === MemberRole.EDITOR;
 
 export class NoteService {
-  async listNotes(workspaceId: number): Promise<NoteResponse[]> {
+  async listNotes(workspaceId: number, userId: number): Promise<NoteResponse[]> {
     const notes = await noteRepository.findByWorkspaceId(workspaceId);
-    return notes.map(toNoteResponse);
+    const votedNoteIds = await voteRepository.findVotedNoteIds(
+      notes.map((note) => note.id),
+      userId,
+    );
+    const votedSet = new Set(votedNoteIds);
+
+    return notes.map((note) => toNoteResponse(note, votedSet.has(note.id)));
   }
 
   async createNote(
@@ -43,7 +53,7 @@ export class NoteService {
     }
 
     const note = await noteRepository.create(workspaceId, userId, dto);
-    return toNoteResponse(note);
+    return toNoteResponse(note, false);
   }
 
   async updateNote(
@@ -67,7 +77,8 @@ export class NoteService {
     }
 
     const updated = await noteRepository.update(noteId, dto);
-    return toNoteResponse(updated);
+    const userVote = await voteRepository.findByNoteAndUser(noteId, userId);
+    return toNoteResponse(updated, Boolean(userVote));
   }
 
   async deleteNote(

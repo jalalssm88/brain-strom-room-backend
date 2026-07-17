@@ -10,6 +10,9 @@ export interface NoteResponse {
   width: number;
   height: number;
   authorName: string;
+  voteCount: number;
+  commentCount: number;
+  hasVoted: boolean;
   createdAt: string;
   updatedAt: string;
 }

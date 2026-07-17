@@ -8,6 +8,12 @@ const noteWithAuthorInclude = {
       fullName: true,
     },
   },
+  _count: {
+    select: {
+      votes: true,
+      comments: true,
+    },
+  },
 } as const;
 
 export type NoteWithAuthor = {
@@ -27,6 +33,10 @@ export type NoteWithAuthor = {
   author: {
     id: number;
     fullName: string;
+  };
+  _count: {
+    votes: number;
+    comments: number;
   };
 };
 

@@ -1,43 +1,48 @@
-import { Router } from "express";
-import { MemberRole } from "../prisma";
-import { noteController } from "../controllers/note.controller";
+import { Router } from 'express';
+import { MemberRole } from '../prisma';
+import { noteController } from '../controllers/note.controller';
 import {
   listNotesValidation,
   createNoteValidation,
   updateNoteValidation,
   noteIdParamValidation,
-} from "../validations/note.validation";
-import { validate } from "../middlewares/validate";
+} from '../validations/note.validation';
+import { validate } from '../middlewares/validate';
 import {
   requireWorkspaceMember,
   requireWorkspaceRole,
-} from "../middlewares/requireWorkspaceRole";
+} from '../middlewares/requireWorkspaceRole';
+import commentRoutes from './comment.routes';
+import voteRoutes from './vote.routes';
 
 const router = Router({ mergeParams: true });
 
 router.get(
-  "/",
+  '/',
   validate(listNotesValidation),
   requireWorkspaceMember,
   noteController.getNoteslist,
 );
 router.post(
-  "/",
+  '/',
   validate(createNoteValidation),
   requireWorkspaceRole(MemberRole.ADMIN, MemberRole.EDITOR),
   noteController.createNote,
 );
 router.patch(
-  "/:noteId",
+  '/:noteId',
   validate(updateNoteValidation),
   requireWorkspaceRole(MemberRole.ADMIN, MemberRole.EDITOR),
   noteController.updateNote,
 );
 router.delete(
-  "/:noteId",
+  '/:noteId',
   validate(noteIdParamValidation),
   requireWorkspaceRole(MemberRole.ADMIN, MemberRole.EDITOR),
   noteController.softDelete,
 );
+
+router.use('/:noteId/comments', commentRoutes);
+router.use('/:noteId/votes', voteRoutes);
 
 export default router;
