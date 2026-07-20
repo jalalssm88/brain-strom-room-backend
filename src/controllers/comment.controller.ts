@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../helpers/asyncHandler';
 import { commentService } from '../services/comment.service';
 import { CreateCommentDto, UpdateCommentDto } from '../types/comment.types';
+import { workspaceBroadcast } from '../socket/emit';
 
 export class CommentController {
   listComments = asyncHandler(async (req: Request, res: Response) => {
@@ -27,6 +28,8 @@ export class CommentController {
       dto,
     );
 
+    workspaceBroadcast.commentCreated(req.workspaceId!, comment);
+
     res.status(201).json({
       success: true,
       data: { comment },
@@ -45,6 +48,8 @@ export class CommentController {
       dto,
     );
 
+    workspaceBroadcast.commentUpdated(req.workspaceId!, comment);
+
     res.status(200).json({
       success: true,
       data: { comment },
@@ -52,13 +57,18 @@ export class CommentController {
   });
 
   deleteComment = asyncHandler(async (req: Request, res: Response) => {
+    const noteId = Number(req.params.noteId);
+    const commentId = Number(req.params.commentId);
+
     await commentService.deleteComment(
       req.workspaceId!,
-      Number(req.params.noteId),
-      Number(req.params.commentId),
+      noteId,
+      commentId,
       req.userId!,
       req.workspaceMember!.role,
     );
+
+    workspaceBroadcast.commentDeleted(req.workspaceId!, noteId, commentId);
 
     res.status(200).json({
       success: true,

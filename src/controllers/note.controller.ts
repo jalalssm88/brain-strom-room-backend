@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../helpers/asyncHandler';
 import { noteService } from '../services/note.service';
 import { CreateNoteDto, UpdateNoteDto } from '../types/note.types';
+import { workspaceBroadcast } from '../socket/emit';
 
 export class NoteController {
   getNoteslist = asyncHandler(async (req: Request, res: Response) => {
@@ -31,6 +32,8 @@ export class NoteController {
       dto,
     );
 
+    workspaceBroadcast.noteCreated(req.workspaceId!, note);
+
     res.status(201).json({
       success: true,
       data: { note },
@@ -56,6 +59,8 @@ export class NoteController {
       dto,
     );
 
+    workspaceBroadcast.noteUpdated(req.workspaceId!, note);
+
     res.status(200).json({
       success: true,
       data: { note },
@@ -63,12 +68,16 @@ export class NoteController {
   });
 
   softDelete = asyncHandler(async (req: Request, res: Response) => {
+    const noteId = Number(req.params.noteId);
+
     await noteService.deleteNote(
       req.workspaceId!,
-      Number(req.params.noteId),
+      noteId,
       req.userId!,
       req.workspaceMember!.role,
     );
+
+    workspaceBroadcast.noteDeleted(req.workspaceId!, noteId);
 
     res.status(200).json({
       success: true,

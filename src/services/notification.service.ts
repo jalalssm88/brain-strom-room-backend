@@ -8,6 +8,8 @@ import {
   NotificationListResult,
   NotificationResponse,
 } from '../types/notification.types';
+import { emitToUser } from '../socket/emit';
+import { SOCKET_BROADCAST_EVENTS } from '../socket/events';
 
 const toNotificationResponse = (notification: {
   id: number;
@@ -32,7 +34,9 @@ const toNotificationResponse = (notification: {
 export class NotificationService {
   async create(data: CreateNotificationData): Promise<NotificationResponse> {
     const notification = await notificationRepository.create(data);
-    return toNotificationResponse(notification);
+    const response = toNotificationResponse(notification);
+    emitToUser(data.userId, SOCKET_BROADCAST_EVENTS.NOTIFICATION_NEW, { notification: response });
+    return response;
   }
 
   async getNotifications(userId: number, pagination: PaginationParams): Promise<NotificationListResult> {
