@@ -10,13 +10,9 @@ import { selectionStore } from './selection';
 import { emitPresenceUpdate } from './emit';
 import { SOCKET_BROADCAST_EVENTS } from './events';
 import { registerWorkspaceHandlers } from './handlers/workspace.handler';
-import { registerNoteHandlers } from './handlers/note.handler';
-import { registerCommentHandlers } from './handlers/comment.handler';
-import { registerVoteHandlers } from './handlers/vote.handler';
 import { registerTypingHandlers } from './handlers/typing.handler';
 import { registerSelectionHandlers } from './handlers/selection.handler';
-
-export { getIO } from './io';
+import { registerChatHandlers } from './handlers/chat.handler';
 
 export const initSocket = (httpServer: HttpServer): Server => {
   const io = new Server(httpServer, {
@@ -36,11 +32,9 @@ export const initSocket = (httpServer: HttpServer): Server => {
     void socket.join(userRoom(socket.data.userId));
 
     registerWorkspaceHandlers(socket);
-    registerNoteHandlers(socket);
-    registerCommentHandlers(socket);
-    registerVoteHandlers(socket);
     registerTypingHandlers(socket);
     registerSelectionHandlers(socket);
+    registerChatHandlers(socket);
 
     socket.on('disconnect', () => {
       const affected = presenceStore.removeSocket(socket.id);

@@ -1,12 +1,6 @@
 import { Workspace, MemberRole } from '../prisma';
 import { prisma } from '../config/database';
 
-export interface CreateWorkspaceData {
-  name: string;
-  description?: string | null;
-  ownerId: number;
-}
-
 export type WorkspaceWithMemberCount = Workspace & { _count: { members: number } };
 
 export type WorkspaceWithMemberRole = WorkspaceWithMemberCount & {
@@ -14,16 +8,6 @@ export type WorkspaceWithMemberRole = WorkspaceWithMemberCount & {
 };
 
 export class WorkspaceRepository {
-  async create(data: CreateWorkspaceData): Promise<Workspace> {
-    return prisma.workspace.create({
-      data: {
-        name: data.name.trim(),
-        description: data.description?.trim() || null,
-        ownerId: data.ownerId,
-      },
-    });
-  }
-
   async findById(id: number): Promise<Workspace | null> {
     return prisma.workspace.findUnique({ where: { id } });
   }

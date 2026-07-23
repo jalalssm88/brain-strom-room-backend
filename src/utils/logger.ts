@@ -1,5 +1,4 @@
 import { ILogger } from '../interfaces/ILogger';
-import { env } from '../config/env';
 
 class ConsoleLogger implements ILogger {
   private format(level: string, message: string, meta?: Record<string, unknown>): string {
@@ -18,12 +17,6 @@ class ConsoleLogger implements ILogger {
 
   error(message: string, meta?: Record<string, unknown>): void {
     console.error(this.format('ERROR', message, meta));
-  }
-
-  debug(message: string, meta?: Record<string, unknown>): void {
-    if (env.NODE_ENV === 'development') {
-      console.debug(this.format('DEBUG', message, meta));
-    }
   }
 }
 

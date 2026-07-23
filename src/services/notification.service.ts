@@ -2,7 +2,7 @@ import { NotificationRefType, NotificationType } from '../prisma';
 import { NotFoundError } from '../errors/AppError';
 import { notificationRepository } from '../repositories/notification.repository';
 import { buildPaginatedResult } from '../helpers/pagination';
-import { PaginatedResult, PaginationParams } from '../types/pagination.types';
+import { PaginationParams } from '../types/pagination.types';
 import {
   CreateNotificationData,
   NotificationListResult,

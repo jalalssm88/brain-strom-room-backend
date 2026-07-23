@@ -44,10 +44,6 @@ export interface JwtRefreshPayload {
   tokenId: string;
 }
 
-export interface VerifyEmailDto {
-  token: string;
-}
-
 export interface ForgotPasswordDto {
   email: string;
 }

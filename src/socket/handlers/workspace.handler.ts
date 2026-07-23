@@ -1,5 +1,5 @@
 import { workspaceMemberRepository } from '../../repositories/workspaceMember.repository';
-import { ForbiddenError, BadRequestError } from '../../errors/AppError';
+import { ForbiddenError } from '../../errors/AppError';
 import { MemberRole } from '../../prisma';
 import { AuthenticatedSocket } from '../middleware/auth';
 import { presenceStore } from '../presence';

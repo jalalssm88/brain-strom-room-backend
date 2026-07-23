@@ -1,21 +1,11 @@
-import { MemberRole, WorkspaceMember, Prisma } from '../prisma';
+import { WorkspaceMember, Prisma } from '../prisma';
 import { prisma } from '../config/database';
-
-export interface CreateWorkspaceMemberData {
-  workspaceId: number;
-  userId: number;
-  role: MemberRole;
-}
 
 export type WorkspaceMemberWithUser = Prisma.WorkspaceMemberGetPayload<{
   include: { user: { select: { id: true; fullName: true; email: true; avatar: true } } };
 }>;
 
 export class WorkspaceMemberRepository {
-  async create(data: CreateWorkspaceMemberData): Promise<WorkspaceMember> {
-    return prisma.workspaceMember.create({ data });
-  }
-
   async findByWorkspaceAndUser(
     workspaceId: number,
     userId: number,

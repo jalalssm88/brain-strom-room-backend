@@ -13,6 +13,7 @@ import { authenticate } from '../middlewares/authenticate';
 import { requireWorkspaceRole } from '../middlewares/requireWorkspaceRole';
 import { MemberRole } from '../prisma';
 import noteRoutes from './note.routes';
+import chatRoutes from './chat.routes';
 
 const router = Router();
 
@@ -47,5 +48,6 @@ router.delete(
 );
 
 router.use('/:id/notes', noteRoutes);
+router.use('/:id/messages', chatRoutes);
 
 export default router;

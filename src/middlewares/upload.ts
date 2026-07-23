@@ -44,7 +44,7 @@ export const uploadAvatar = multer({
 export const toAvatarPublicPath = (filename: string): string =>
   `${AVATARS_PUBLIC_PREFIX}/${filename}`;
 
-export const isLocalAvatarPath = (avatar: string | null | undefined): boolean =>
+const isLocalAvatarPath = (avatar: string | null | undefined): boolean =>
   Boolean(avatar?.startsWith(`${AVATARS_PUBLIC_PREFIX}/`));
 
 export const deleteLocalAvatar = (avatar: string | null | undefined): void => {
